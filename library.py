@@ -84,3 +84,26 @@ class DropColumnsTransformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+
+
+class PearsonTransformer(BaseEstimator, TransformerMixin):
+  def __init__(self, threshold):
+    self.threshold = threshold
+
+  #define methods below
+  def fit(self, X, y = None):
+    print("Warning: PearsonTransformer.fit does nothing.")
+    return X
+
+  def transform(self, X):
+    assert isinstance(X, pd.core.frame.DataFrame), f'PearsonTransformer.transform expected Dataframe but got {type(X)} instead.'
+    df_corr = X.corr(method='pearson')
+    masked_df = df_corr.abs() > self.threshold
+    upper_mask = np.triu(masked_df, 1)
+    correlated_columns = [col for (index, col) in enumerate(masked_df) if np.any(upper_mask[:,index])]
+    X_ = X.drop(columns=correlated_columns)
+    return X_
+  
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
