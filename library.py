@@ -62,13 +62,6 @@ class DropColumnsTransformer(BaseEstimator, TransformerMixin):
     self.action = action
 
   #fill in rest below
-  def __init__(self, column_list, action='drop'):
-    assert action in ['keep', 'drop'], f'DropColumnsTransformer action {action} not in ["keep", "drop"]'
-    assert isinstance(column_list, list), f'DropColumnsTransformer expected list but saw {type(column_list)}'
-    self.column_list = column_list
-    self.action = action
-
-  #fill in rest below
   def fit(self, X, y = None):
     print("Warning: DropColumnsTransformer.fit does nothing.")
     return X
