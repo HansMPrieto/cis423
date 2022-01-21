@@ -164,3 +164,28 @@ class TukeyTransformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+
+ 
+class MinMaxTransformer(BaseEstimator, TransformerMixin):
+  def __init__(self):
+    pass
+
+  #fill in rest below
+  def fit(self, X, y = None):
+    print("Warning: MinMaxTransformer.fit does nothing.")
+    return X
+
+  def transform(self, X):
+    assert isinstance(X, pd.core.frame.DataFrame), f'MinMaxTransformer.transform expected Dataframe but got {type(X)} instead.'
+
+    X_ = X.copy()
+    for col in X_.columns:
+      mi = X_[col].min()
+      mx = X_[col].max()
+      new_col = [(val - mi) / (mx-mi) for val in X_[col]]
+      X_[col] = new_col
+    return X_
+
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
