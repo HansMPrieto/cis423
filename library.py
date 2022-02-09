@@ -34,6 +34,60 @@ customer_transformer = Pipeline(steps=[
     ], verbose=True)
 
 
+# general dataset setup
+def dataset_setup(feature_table, labels, the_transformer, rs=1234, ts=.2):
+  X_train, X_test, y_train, y_test = train_test_split(feature_table, labels, test_size=ts, shuffle=True,
+                                                    random_state=rs, stratify=labels)
+  
+  X_train_transformed = the_transformer.fit_transform(X_train)
+  X_test_transformed = the_transformer.fit_transform(X_test)
+
+  x_trained_numpy = X_train_transformed.to_numpy()
+  y_train_numpy = np.array(y_train)
+  x_test_numpy = X_test_transformed.to_numpy()
+  y_test_numpy = np.array(y_test)
+
+  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
+
+
+# titanic dataset setup
+def titanic_setup(titanic_table, transformer=titanic_transformer, rs=88, ts=.2):
+  titanic_features = titanic_table.drop(columns='Survived')
+  labels = titanic_table['Survived'].to_list()
+  
+  X_train, X_test, y_train, y_test = train_test_split(titanic_features, labels, test_size=ts, shuffle=True,
+                                                    random_state=rs, stratify=labels)
+  
+  X_train_transformed = transformer.fit_transform(X_train)
+  X_test_transformed = transformer.fit_transform(X_test)
+
+  x_trained_numpy = X_train_transformed.to_numpy()
+  y_train_numpy = np.array(y_train)
+  x_test_numpy = X_test_transformed.to_numpy()
+  y_test_numpy = np.array(y_test)
+
+  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
+
+
+# customer dataset setup
+def customer_setup(customer_table, transformer=customer_transformer, rs=107, ts=.2):
+  customer_features = customer_table.drop(columns=['Rating'])
+  labels = customer_table['Rating']
+  
+  X_train, X_test, y_train, y_test = train_test_split(customer_features, labels, test_size=ts, shuffle=True,
+                                                    random_state=rs, stratify=labels)
+  
+  X_train_transformed = transformer.fit_transform(X_train)
+  X_test_transformed = transformer.fit_transform(X_test)
+
+  x_trained_numpy = X_train_transformed.to_numpy()
+  y_train_numpy = np.array(y_train)
+  x_test_numpy = X_test_transformed.to_numpy()
+  y_test_numpy = np.array(y_test)
+
+  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
+
+
 def find_random_state(df, labels, n=200):
   var = []  #collect test_error/train_error where error based on F1 score
 
