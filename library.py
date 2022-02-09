@@ -9,105 +9,6 @@ from sklearn.metrics import f1_score
 
 model = LogisticRegressionCV(random_state=1, max_iter=5000)
 
-# titanic transformer
-titanic_transformer = Pipeline(steps=[
-    ('drop', DropColumnsTransformer(['Age', 'Gender', 'Class', 'Joined', 'Married',  'Fare'], 'keep')),
-    ('gender', MappingTransformer('Gender', {'Male': 0, 'Female': 1})),
-    ('class', MappingTransformer('Class', {'Crew': 0, 'C3': 1, 'C2': 2, 'C1': 3})),
-    ('ohe', OHETransformer(target_column='Joined')),
-    ('age', TukeyTransformer(target_column='Age', fence='outer')), #from chapter 4
-    ('fare', TukeyTransformer(target_column='Fare', fence='outer')), #from chapter 4
-    ('minmax', MinMaxTransformer()),  #from chapter 5
-    ('imputer', KNNTransformer())  #from chapter 6
-    ], verbose=True)
-
-# customer transformer
-customer_transformer = Pipeline(steps=[
-    ('id', DropColumnsTransformer(column_list=['ID'])),
-    ('os', OHETransformer(target_column='OS')),
-    ('isp', OHETransformer(target_column='ISP')),
-    ('level', MappingTransformer('Experience Level', {'low': 0, 'medium': 1, 'high':2})),
-    ('gender', MappingTransformer('Gender', {'Male': 0, 'Female': 1})),
-    ('time spent', TukeyTransformer('Time Spent', 'inner')),
-    ('minmax', MinMaxTransformer()),
-    ('imputer', KNNTransformer())
-    ], verbose=True)
-
-
-# general dataset setup
-def dataset_setup(feature_table, labels, the_transformer, rs=1234, ts=.2):
-  X_train, X_test, y_train, y_test = train_test_split(feature_table, labels, test_size=ts, shuffle=True,
-                                                    random_state=rs, stratify=labels)
-  
-  X_train_transformed = the_transformer.fit_transform(X_train)
-  X_test_transformed = the_transformer.fit_transform(X_test)
-
-  x_trained_numpy = X_train_transformed.to_numpy()
-  y_train_numpy = np.array(y_train)
-  x_test_numpy = X_test_transformed.to_numpy()
-  y_test_numpy = np.array(y_test)
-
-  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
-
-
-# titanic dataset setup
-def titanic_setup(titanic_table, transformer=titanic_transformer, rs=88, ts=.2):
-  titanic_features = titanic_table.drop(columns='Survived')
-  labels = titanic_table['Survived'].to_list()
-  
-  X_train, X_test, y_train, y_test = train_test_split(titanic_features, labels, test_size=ts, shuffle=True,
-                                                    random_state=rs, stratify=labels)
-  
-  X_train_transformed = transformer.fit_transform(X_train)
-  X_test_transformed = transformer.fit_transform(X_test)
-
-  x_trained_numpy = X_train_transformed.to_numpy()
-  y_train_numpy = np.array(y_train)
-  x_test_numpy = X_test_transformed.to_numpy()
-  y_test_numpy = np.array(y_test)
-
-  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
-
-
-# customer dataset setup
-def customer_setup(customer_table, transformer=customer_transformer, rs=107, ts=.2):
-  customer_features = customer_table.drop(columns=['Rating'])
-  labels = customer_table['Rating']
-  
-  X_train, X_test, y_train, y_test = train_test_split(customer_features, labels, test_size=ts, shuffle=True,
-                                                    random_state=rs, stratify=labels)
-  
-  X_train_transformed = transformer.fit_transform(X_train)
-  X_test_transformed = transformer.fit_transform(X_test)
-
-  x_trained_numpy = X_train_transformed.to_numpy()
-  y_train_numpy = np.array(y_train)
-  x_test_numpy = X_test_transformed.to_numpy()
-  y_test_numpy = np.array(y_test)
-
-  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
-
-
-def find_random_state(df, labels, n=200):
-  var = []  #collect test_error/train_error where error based on F1 score
-
-  #2 minutes
-  for i in range(1, n):
-    train_X, test_X, train_y, test_y = train_test_split(df, labels, test_size=0.2, shuffle=True,
-                                                    random_state=i, stratify=labels)
-    model.fit(train_X, train_y)  #train model
-    train_pred = model.predict(train_X)  #predict against training set
-    test_pred = model.predict(test_X)    #predict against test set
-    train_error = f1_score(train_y, train_pred)  #how bad did we do with prediction on training data?
-    test_error = f1_score(test_y, test_pred)     #how bad did we do with prediction on test data?
-    error_ratio = test_error/train_error        #take the ratio
-    var.append(error_ratio)
-
-  rs_value = sum(var)/len(var)
-  idx = np.array(abs(var - rs_value)).argmin()
-  return idx
-
-
 # This class maps values in a column, numeric or categorical.
 class MappingTransformer(BaseEstimator, TransformerMixin):
 
@@ -317,3 +218,102 @@ class KNNTransformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+
+
+# titanic transformer
+titanic_transformer = Pipeline(steps=[
+    ('drop', DropColumnsTransformer(['Age', 'Gender', 'Class', 'Joined', 'Married',  'Fare'], 'keep')),
+    ('gender', MappingTransformer('Gender', {'Male': 0, 'Female': 1})),
+    ('class', MappingTransformer('Class', {'Crew': 0, 'C3': 1, 'C2': 2, 'C1': 3})),
+    ('ohe', OHETransformer(target_column='Joined')),
+    ('age', TukeyTransformer(target_column='Age', fence='outer')), #from chapter 4
+    ('fare', TukeyTransformer(target_column='Fare', fence='outer')), #from chapter 4
+    ('minmax', MinMaxTransformer()),  #from chapter 5
+    ('imputer', KNNTransformer())  #from chapter 6
+    ], verbose=True)
+
+# customer transformer
+customer_transformer = Pipeline(steps=[
+    ('id', DropColumnsTransformer(column_list=['ID'])),
+    ('os', OHETransformer(target_column='OS')),
+    ('isp', OHETransformer(target_column='ISP')),
+    ('level', MappingTransformer('Experience Level', {'low': 0, 'medium': 1, 'high':2})),
+    ('gender', MappingTransformer('Gender', {'Male': 0, 'Female': 1})),
+    ('time spent', TukeyTransformer('Time Spent', 'inner')),
+    ('minmax', MinMaxTransformer()),
+    ('imputer', KNNTransformer())
+    ], verbose=True)
+
+
+# general dataset setup
+def dataset_setup(feature_table, labels, the_transformer, rs=1234, ts=.2):
+  X_train, X_test, y_train, y_test = train_test_split(feature_table, labels, test_size=ts, shuffle=True,
+                                                    random_state=rs, stratify=labels)
+  
+  X_train_transformed = the_transformer.fit_transform(X_train)
+  X_test_transformed = the_transformer.fit_transform(X_test)
+
+  x_trained_numpy = X_train_transformed.to_numpy()
+  y_train_numpy = np.array(y_train)
+  x_test_numpy = X_test_transformed.to_numpy()
+  y_test_numpy = np.array(y_test)
+
+  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
+
+
+# titanic dataset setup
+def titanic_setup(titanic_table, transformer=titanic_transformer, rs=88, ts=.2):
+  titanic_features = titanic_table.drop(columns='Survived')
+  labels = titanic_table['Survived'].to_list()
+  
+  X_train, X_test, y_train, y_test = train_test_split(titanic_features, labels, test_size=ts, shuffle=True,
+                                                    random_state=rs, stratify=labels)
+  
+  X_train_transformed = transformer.fit_transform(X_train)
+  X_test_transformed = transformer.fit_transform(X_test)
+
+  x_trained_numpy = X_train_transformed.to_numpy()
+  y_train_numpy = np.array(y_train)
+  x_test_numpy = X_test_transformed.to_numpy()
+  y_test_numpy = np.array(y_test)
+
+  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
+
+
+# customer dataset setup
+def customer_setup(customer_table, transformer=customer_transformer, rs=107, ts=.2):
+  customer_features = customer_table.drop(columns=['Rating'])
+  labels = customer_table['Rating']
+  
+  X_train, X_test, y_train, y_test = train_test_split(customer_features, labels, test_size=ts, shuffle=True,
+                                                    random_state=rs, stratify=labels)
+  
+  X_train_transformed = transformer.fit_transform(X_train)
+  X_test_transformed = transformer.fit_transform(X_test)
+
+  x_trained_numpy = X_train_transformed.to_numpy()
+  y_train_numpy = np.array(y_train)
+  x_test_numpy = X_test_transformed.to_numpy()
+  y_test_numpy = np.array(y_test)
+
+  return x_trained_numpy, y_train_numpy, x_test_numpy, y_test_numpy
+
+
+def find_random_state(df, labels, n=200):
+  var = []  #collect test_error/train_error where error based on F1 score
+
+  #2 minutes
+  for i in range(1, n):
+    train_X, test_X, train_y, test_y = train_test_split(df, labels, test_size=0.2, shuffle=True,
+                                                    random_state=i, stratify=labels)
+    model.fit(train_X, train_y)  #train model
+    train_pred = model.predict(train_X)  #predict against training set
+    test_pred = model.predict(test_X)    #predict against test set
+    train_error = f1_score(train_y, train_pred)  #how bad did we do with prediction on training data?
+    test_error = f1_score(test_y, test_pred)     #how bad did we do with prediction on test data?
+    error_ratio = test_error/train_error        #take the ratio
+    var.append(error_ratio)
+
+  rs_value = sum(var)/len(var)
+  idx = np.array(abs(var - rs_value)).argmin()
+  return idx
